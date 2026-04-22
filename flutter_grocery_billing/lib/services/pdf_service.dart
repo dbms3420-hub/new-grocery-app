@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -12,14 +11,12 @@ import '../models/app_settings.dart';
 class PdfService {
   static const double _pageWidth = 80 * PdfPageFormat.mm;
 
-  /// Generate PDF bill and return bytes
   static Future<Uint8List> generateBillPdf(
     Bill bill,
     AppSettings settings,
   ) async {
     final pdf = pw.Document();
 
-    // Load custom Bengali font
     pw.Font? bengaliFont;
     pw.Font? bengaliFontBold;
     try {
@@ -27,11 +24,8 @@ class PdfService {
       final boldData = await rootBundle.load('assets/fonts/NotoSansBengali-Bold.ttf');
       bengaliFont = pw.Font.ttf(fontData);
       bengaliFontBold = pw.Font.ttf(boldData);
-    } catch (_) {
-      // Fallback if font not available
-    }
+    } catch (_) {}
 
-    // Load shop logo
     pw.ImageProvider? logoImage;
     try {
       final logoData = await rootBundle.load('assets/images/shop_logo.png');
@@ -54,66 +48,42 @@ class PdfService {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.stretch,
             children: [
-              // Logo
               if (logoImage != null)
                 pw.Center(
                   child: pw.Image(logoImage,
                       width: 40 * PdfPageFormat.mm, height: 20 * PdfPageFormat.mm,
                       fit: pw.BoxFit.contain),
                 ),
-
               pw.SizedBox(height: 4),
-
-              // Shop name
               pw.Center(
-                child: pw.Text(
-                  settings.shopName,
-                  style: pw.TextStyle(
-                    font: bengaliFontBold,
-                    fontSize: 14,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                  textAlign: pw.TextAlign.center,
-                ),
+                child: pw.Text(settings.shopName,
+                    style: pw.TextStyle(
+                        font: bengaliFontBold, fontSize: 14,
+                        fontWeight: pw.FontWeight.bold),
+                    textAlign: pw.TextAlign.center),
               ),
               pw.Center(
-                child: pw.Text(
-                  settings.shopAddress,
-                  style: pw.TextStyle(font: bengaliFont, fontSize: 8),
-                  textAlign: pw.TextAlign.center,
-                ),
+                child: pw.Text(settings.shopAddress,
+                    style: pw.TextStyle(font: bengaliFont, fontSize: 8),
+                    textAlign: pw.TextAlign.center),
               ),
               pw.Center(
-                child: pw.Text(
-                  'Tel: ${settings.shopPhone}',
-                  style: pw.TextStyle(font: bengaliFont, fontSize: 8),
-                ),
+                child: pw.Text('Tel: ${settings.shopPhone}',
+                    style: pw.TextStyle(font: bengaliFont, fontSize: 8)),
               ),
               if (settings.gstNumber.isNotEmpty)
                 pw.Center(
-                  child: pw.Text(
-                    'GST: ${settings.gstNumber}',
-                    style: pw.TextStyle(font: bengaliFont, fontSize: 7),
-                  ),
+                  child: pw.Text('GST: ${settings.gstNumber}',
+                      style: pw.TextStyle(font: bengaliFont, fontSize: 7)),
                 ),
-
               _divider(),
-
-              // Bill title
               pw.Center(
-                child: pw.Text(
-                  'CASH MEMO / ক্যাশ মেমো',
-                  style: pw.TextStyle(
-                    font: bengaliFontBold,
-                    fontSize: 11,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
+                child: pw.Text('CASH MEMO / ক্যাশ মেমো',
+                    style: pw.TextStyle(
+                        font: bengaliFontBold, fontSize: 11,
+                        fontWeight: pw.FontWeight.bold)),
               ),
-
               pw.SizedBox(height: 4),
-
-              // Bill number + date
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
@@ -123,17 +93,13 @@ class PdfService {
                       style: pw.TextStyle(font: bengaliFont, fontSize: 7)),
                 ],
               ),
-
               if (bill.customerName != null && bill.customerName!.isNotEmpty)
                 pw.Text('Customer: ${bill.customerName}',
                     style: pw.TextStyle(font: bengaliFont, fontSize: 7)),
               if (bill.customerPhone != null && bill.customerPhone!.isNotEmpty)
                 pw.Text('Phone: ${bill.customerPhone}',
                     style: pw.TextStyle(font: bengaliFont, fontSize: 7)),
-
               _divider(),
-
-              // Column headers
               pw.Row(
                 children: [
                   pw.Expanded(
@@ -161,10 +127,7 @@ class PdfService {
                   ),
                 ],
               ),
-
               _divider(),
-
-              // Items
               ...bill.items.map((item) => pw.Padding(
                     padding: const pw.EdgeInsets.symmetric(vertical: 1.5),
                     child: pw.Row(
@@ -172,51 +135,43 @@ class PdfService {
                       children: [
                         pw.Expanded(
                           flex: 4,
-                          child: pw.Text(
-                            item.nameBn ?? item.name,
-                            style: pw.TextStyle(font: bengaliFont, fontSize: 8),
-                          ),
+                          child: pw.Text(item.nameBn ?? item.name,
+                              style: pw.TextStyle(font: bengaliFont, fontSize: 8)),
                         ),
                         pw.SizedBox(
                           width: 25,
-                          child: pw.Text(
-                            '${item.quantity} ${item.unit}',
-                            style: pw.TextStyle(font: bengaliFont, fontSize: 7),
-                          ),
+                          child: pw.Text('${item.quantity} ${item.unit}',
+                              style: pw.TextStyle(font: bengaliFont, fontSize: 7)),
                         ),
                         pw.SizedBox(
                           width: 22,
                           child: pw.Text(
-                            '${settings.currency}${item.price.toStringAsFixed(0)}',
-                            style: pw.TextStyle(font: bengaliFont, fontSize: 7),
-                          ),
+                              '${settings.currency}${item.price.toStringAsFixed(0)}',
+                              style: pw.TextStyle(font: bengaliFont, fontSize: 7)),
                         ),
                         pw.SizedBox(
                           width: 24,
                           child: pw.Text(
-                            '${settings.currency}${item.total.toStringAsFixed(2)}',
-                            textAlign: pw.TextAlign.right,
-                            style: pw.TextStyle(font: bengaliFont, fontSize: 7),
-                          ),
+                              '${settings.currency}${item.total.toStringAsFixed(2)}',
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(font: bengaliFont, fontSize: 7)),
                         ),
                       ],
                     ),
                   )),
-
               _divider(),
-
-              // Subtotal / Discount / Tax / Total
-              _summaryRow('Subtotal:', '${settings.currency}${bill.subtotal.toStringAsFixed(2)}',
+              _summaryRow('Subtotal:',
+                  '${settings.currency}${bill.subtotal.toStringAsFixed(2)}',
                   font: bengaliFont),
               if (bill.discount > 0)
-                _summaryRow('Discount:', '-${settings.currency}${bill.discount.toStringAsFixed(2)}',
+                _summaryRow('Discount:',
+                    '-${settings.currency}${bill.discount.toStringAsFixed(2)}',
                     font: bengaliFont),
               if (bill.tax > 0)
-                _summaryRow('Tax:', '+${settings.currency}${bill.tax.toStringAsFixed(2)}',
+                _summaryRow('Tax:',
+                    '+${settings.currency}${bill.tax.toStringAsFixed(2)}',
                     font: bengaliFont),
-
               _divider(),
-
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
@@ -230,42 +185,30 @@ class PdfService {
                           fontWeight: pw.FontWeight.bold)),
                 ],
               ),
-
               pw.SizedBox(height: 4),
               pw.Text('Payment: ${bill.paymentMode.label}',
                   style: pw.TextStyle(font: bengaliFont, fontSize: 7)),
-
               _divider(),
-
-              // Taglines
               pw.Center(
-                child: pw.Text(
-                  settings.tagline1,
-                  style: pw.TextStyle(
-                      font: bengaliFontBold, fontSize: 9,
-                      fontStyle: pw.FontStyle.italic),
-                  textAlign: pw.TextAlign.center,
-                ),
+                child: pw.Text(settings.tagline1,
+                    style: pw.TextStyle(
+                        font: bengaliFontBold, fontSize: 9,
+                        fontStyle: pw.FontStyle.italic),
+                    textAlign: pw.TextAlign.center),
               ),
               pw.SizedBox(height: 3),
               pw.Center(
-                child: pw.Text(
-                  settings.tagline2,
-                  style: pw.TextStyle(
-                      font: bengaliFontBold, fontSize: 9,
-                      fontStyle: pw.FontStyle.italic),
-                  textAlign: pw.TextAlign.center,
-                ),
+                child: pw.Text(settings.tagline2,
+                    style: pw.TextStyle(
+                        font: bengaliFontBold, fontSize: 9,
+                        fontStyle: pw.FontStyle.italic),
+                    textAlign: pw.TextAlign.center),
               ),
-
               _divider(),
-
               pw.Center(
-                child: pw.Text(
-                  settings.footerNote,
-                  style: pw.TextStyle(font: bengaliFont, fontSize: 6.5),
-                  textAlign: pw.TextAlign.center,
-                ),
+                child: pw.Text(settings.footerNote,
+                    style: pw.TextStyle(font: bengaliFont, fontSize: 6.5),
+                    textAlign: pw.TextAlign.center),
               ),
             ],
           );
@@ -276,7 +219,6 @@ class PdfService {
     return pdf.save();
   }
 
-  /// Save to temp file and return path
   static Future<File> savePdfToFile(Uint8List bytes, String billNumber) async {
     final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/Bill_$billNumber.pdf');
@@ -284,7 +226,6 @@ class PdfService {
     return file;
   }
 
-  /// Share PDF via system share sheet (WhatsApp, Email, etc.)
   static Future<void> sharePdf(Uint8List bytes, String billNumber, String shopName) async {
     await Printing.sharePdf(
       bytes: bytes,
@@ -293,7 +234,6 @@ class PdfService {
     );
   }
 
-  /// Open print dialog
   static Future<void> printPdf(Uint8List bytes) async {
     await Printing.layoutPdf(onLayout: (_) async => bytes);
   }
