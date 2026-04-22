@@ -4,27 +4,28 @@ on:
   push:
     branches: [ main ]
     tags:
-      - 'v*'           # triggers on version tags like v1.0.0
-  workflow_dispatch:   # allows manual trigger from GitHub UI
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build:
     name: Build Flutter APK
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: flutter_grocery_billing
+
     steps:
-      # 1. Checkout code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Set up Java (required for Android builds)
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 3. Set up Flutter
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -32,42 +33,34 @@ jobs:
           channel: 'stable'
           cache: true
 
-      # 4. Install dependencies
       - name: Install dependencies
         run: flutter pub get
 
-      # 5. Analyze code (optional but good practice)
       - name: Analyze code
         run: flutter analyze --no-fatal-warnings
 
-      # 6. Build release APK
       - name: Build Release APK
         run: flutter build apk --release --no-tree-shake-icons
 
-      # 7. Upload APK as artifact (downloadable from Actions tab)
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: grocery-billing-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: flutter_grocery_billing/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
 
-      # 8. Create GitHub Release (only on version tags like v1.0.0)
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: build/app/outputs/flutter-apk/app-release.apk
+          files: flutter_grocery_billing/build/app/outputs/flutter-apk/app-release.apk
           name: Release ${{ github.ref_name }}
           body: |
             ## Grocery Billing App ${{ github.ref_name }}
 
-            ### Download
-            Download the APK below and install on your Android phone.
-
-            ### Install Instructions
-            1. Download `app-release.apk`
+            ### How to install
+            1. Download `app-release.apk` below
             2. On your Android phone: Settings → Security → Allow unknown sources
-            3. Open the downloaded APK and install
+            3. Open the APK file and tap Install
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
